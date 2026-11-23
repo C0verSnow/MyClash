@@ -14,19 +14,20 @@
 
 ## 想做：
 
-- [1795433762] 创建 PR 后再更新说明文档，合并 PR 并关闭 Issue #1。
-- [1795433762] 合并到 main 后，用户在 `config.yaml` 的 `proxy-providers` 填入订阅地址即可在 Mihomo 客户端拉取 `rules/bybit.list`。
+- [1795433871] 完成最后一次文档更新提交（更新 `README.md`），然后合并 PR #2 并确认 Issue #1 自动关闭。
+- [1795433871] 合并到 `main` 后，用户在 `config.yaml` 的 `proxy-providers` 填入订阅链接，即可直接在 Mihomo 客户端拉取 `https://raw.githubusercontent.com/C0verSnow/MyClash/main/rules/bybit.list`。
 
 ## 做完：
 
 - [1795433762] 已克隆 `C0verSnow/MyClash` 到本地并切到 `feat/bybit-ruleset-and-config` 分支，读取 Issue #1 评论与附件 `3.yaml`、`2.yaml`。
-- [1795433762] 已在 GitHub 检索开源同类项目：`MetaCubeX/mihomo`（36016 star，MIT）、`MetaCubeX/Meta-Docs`（202 star，近期有提交）和 `Aethersailor/Custom_OpenClash_Rules`（6882 star，CC-BY-SA-4.0），确认了 `fallback` 组字段、`classical`/`text` 规则文件格式和 `rule-providers` 写法。
-- [1795433762] 已整理生成 `rules/bybit.list`（25 条规则，去掉末尾多余逗号和空格）与 `config.yaml`（新增 `bybit` 规则集和 `RULE-SET,bybit,Bybit`，修复 `Bybit` 组语法并改为 `fallback`）。
+- [1795433762] 已在 GitHub 检索开源同类项目：`MetaCubeX/mihomo`（36016 star，MIT）、`MetaCubeX/Meta-Docs`（202 star）和 `Aethersailor/Custom_OpenClash_Rules`（6882 star，CC-BY-SA-4.0），确认 `fallback` 组字段、`classical`/`text` 规则文件格式及 `rule-providers` 写法。
+- [1795433825] 已整理生成 `rules/bybit.list`（25 条规则，清理末尾多余逗号与空格）与 `config.yaml`（修复锚点顺序、修复 `Bybit` 组语法并改为 `fallback`、新增 `bybit` 规则集与 `RULE-SET,bybit,Bybit`），并通过 Ruby `YAML.safe_load` 静态解析与正则校验。
+- [1795433871] 已推送分支并创建 PR #2（`https://github.com/C0verSnow/MyClash/pull/2`）。
 
 ## 没做：
 
-- [1795433762] 按仓库规范未执行本地编译、构建或运行 Mihomo 内核测试；当前仓库没有已有 CI 工作流，未新增额外 CI 工具。
+- [1795433871] 按仓库规范未执行本地编译、构建或运行 Mihomo 内核实测；仓库无既有 CI 工作流，未新增额外 CI 工具。
 
 ## 在做：
 
-- [1795433762] 准备静态校验 YAML 与规则格式后提交 PR。
+- [1795433871] 按四象限重新整理 `tasklist.md`（倒数第二次提交），随后更新 `README.md` 并合并 PR。
