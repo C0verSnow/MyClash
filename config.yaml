@@ -1,0 +1,315 @@
+# 参考 Mihomo 官方配置规范与开源规则项目整理：
+# - MetaCubeX/mihomo: https://github.com/MetaCubeX/mihomo
+# - MetaCubeX/Meta-Docs: https://github.com/MetaCubeX/Meta-Docs (https://wiki.metacubex.one/config/proxy-groups/)
+# - Aethersailor/Custom_OpenClash_Rules: https://github.com/Aethersailor/Custom_OpenClash_Rules
+
+# ==================== 模板锚点 ====================
+# 订阅更新与健康检查默认模板（供 proxy-providers 复用，须定义在引用之前）
+p: &p
+  type: http
+  interval: 3600
+  health-check:
+    enable: true
+    url: https://www.gstatic.com/generate_204
+    interval: 300
+
+# ==================== 代理集合 ====================
+# 使用前请在 url 中填入实际订阅链接（未填写会导致拉取报错）
+proxy-providers:
+  provider1:
+    <<: *p
+    url: ""
+  provider2:
+    <<: *p
+    url: ""
+
+# ==================== 基础配置 ====================
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: false
+unified-delay: true
+tcp-concurrent: true
+find-process-mode: strict
+keep-alive-interval: 600
+keep-alive-idle: 600
+external-controller: 127.0.0.1:9090
+
+geo-auto-update: false
+geox-url:
+  asn: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/GeoLite2-ASN.mmdb
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+# ==================== 时间同步 ====================
+ntp:
+  enable: true
+  server: time.apple.com
+  port: 123
+  interval: 30
+  write-to-system: false
+
+# ==================== TUN 配置 ====================
+tun:
+  enable: false
+  stack: gvisor
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: false
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+# ==================== 流量嗅探 ====================
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: true
+  sniff:
+    HTTP:
+      ports:
+        - 80
+        - 8080-8880
+      override-destination: true
+    TLS:
+      ports:
+        - 443
+        - 8443
+    QUIC:
+      ports:
+        - 443
+        - 8443
+  skip-domain:
+    - Mijia Cloud
+    - +.push.apple.com
+    - +.apple.com
+    - +.stun.*.*
+
+# ==================== DNS 配置 ====================
+dns:
+  enable: true
+  ipv6: false
+  prefer-h3: false
+  respect-rules: true
+  use-system-hosts: false
+  cache-algorithm: arc
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+    - '*.direct'
+    - '*.localhost'
+    - time.*.com
+    - ntp.*.com
+    - time.*.gov
+    - time.*.apple.com
+    - time.windows.com
+    - time.nist.gov
+    - +.pool.ntp.org
+    - '*.msftconnecttest.com'
+    - '*.msftncsi.com'
+    - localhost.ptlogin2.qq.com
+    - '*.cmpassport.com'
+    - '*.mcdn.bilivideo.cn'
+    - '*.battlenet.com.cn'
+    - +.wotgame.cn
+    - +.wggames.cn
+    - +.wowsgame.cn
+    - id6.me
+    - lens.l.google.com
+    - captive.apple.com
+    - connectivitycheck.gstatic.com
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  direct-nameserver-follow-policy: false
+  direct-nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  proxy-server-nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  nameserver:
+    - https://dns.cloudflare.com/dns-query#Select
+    - https://dns.google/dns-query#Select
+  nameserver-policy:
+    'rule-set:category-ads-all,awavenue-ads': rcode://success
+    'rule-set:cn':
+      - https://doh.pub/dns-query
+      - https://dns.alidns.com/dns-query
+
+# ==================== 节点配置 ====================
+proxies: []
+
+# ==================== 策略组 ====================
+proxy-groups:
+  - name: Select
+    type: select
+    proxies:
+      - DIRECT
+      - Default
+    include-all: true
+
+  - name: Default
+    type: url-test
+    include-all: true
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+    timeout: 2000
+    tolerance: 50
+    expected-status: '204'
+    max-failed-times: 3
+    lazy: true
+    hidden: true
+    exclude-type: direct|reject
+    exclude-filter: '\[Home\]'
+
+  - name: Bybit
+    type: fallback
+    include-all: true
+    url: http://cp.cloudflare.com/generate_204
+    interval: 300
+    timeout: 2000
+    expected-status: '204'
+    max-failed-times: 3
+    lazy: true
+    exclude-type: direct|reject
+    exclude-filter: '(?i)^Tailscale$|^(DIRECT|REJECT|COMPATIBLE|PASS|GLOBAL|直连)$|🇺🇸|🇨🇳|🇭🇰|🇸🇬|🇨🇦|🇰🇵|🇨🇺|🇮🇷|🇺🇿|🇸🇩|🇸🇾|直连|剩余|距离|到期|更新|官网|更多|付费|日本|Japan|Malaysia|泰国|Thailand|美国|美國|美西|美东|美東|中国|中國|大陆|大陸|内地|內地|香港|新加坡|狮城|獅城|加拿大|北韩|北韓|朝鲜|朝鮮|古巴|伊朗|乌兹别克|烏茲別克|苏丹|蘇丹|叙利亚|敘利亞|克里米亚|克里米亞|塞瓦斯托波尔|塞瓦斯托波爾|顿内次克|頓內次克|顿涅茨克|頓涅茨克|卢甘斯克|盧甘斯克|赫尔松|赫爾松|札波罗热|札波羅熱|扎波罗热|扎波羅熱|(^|[^a-z])(united[\s_-]*states|hong[\s_-]*kong|singapore|canada|north[\s_-]*korea|dprk|cuba|iran|uzbekistan|sudan|syria)($|[^a-z])|(^|[^a-z])(crimea|sevastopol|donetsk|luhansk|lugansk|kherson|zaporizhzhia|zaporizhia|zaporozhye)($|[^a-z])|(^|[^a-z])(us|usa|cn|chn|china|hk|hkg|sg|sgp|ca|can|kp|prk|cu|cub|ir|irn|uz|uzb|sd|sdn|sy|syr)($|[^a-z])|\[Home\]'
+
+# ==================== 规则集合 ====================
+rule-providers:
+  private:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs
+    path: ./ruleset/private.mrs
+    interval: 86400
+  awavenue-ads:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@main/Filters/AWAvenue-Ads-Rule-Clash.mrs
+    path: ./ruleset/awavenue-ads.mrs
+    interval: 86400
+  category-ads-all:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-ads-all.mrs
+    path: ./ruleset/category-ads-all.mrs
+    interval: 86400
+  bybit:
+    type: http
+    behavior: classical
+    format: text
+    url: https://raw.githubusercontent.com/C0verSnow/MyClash/main/rules/bybit.list
+    path: ./ruleset/bybit.list
+    interval: 86400
+  overseas-ai:
+    type: http
+    behavior: classical
+    format: text
+    url: https://raw.githubusercontent.com/viewer12/OverseasAI.list/main/rule/Clash/OverseasAI/OverseasAI.list
+    path: ./ruleset/overseas-ai.list
+    interval: 86400
+  google:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/google.mrs
+    path: ./ruleset/google.mrs
+    interval: 86400
+  tiktok:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/tiktok.mrs
+    path: ./ruleset/tiktok.mrs
+    interval: 86400
+  steam@cn:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs
+    path: ./ruleset/steam@cn.mrs
+    interval: 86400
+  apple-cn:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple-cn.mrs
+    path: ./ruleset/apple-cn.mrs
+    interval: 86400
+  microsoft@cn:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft@cn.mrs
+    path: ./ruleset/microsoft@cn.mrs
+    interval: 86400
+  cn:
+    type: http
+    behavior: domain
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs
+    path: ./ruleset/cn.mrs
+    interval: 86400
+  cn-ip:
+    type: http
+    behavior: ipcidr
+    format: mrs
+    url: https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/cn.mrs
+    path: ./ruleset/cn-ip.mrs
+    interval: 86400
+
+# ==================== 分流规则 ====================
+rules:
+  - DOMAIN,m1.tohno-0.top,DIRECT
+  - RULE-SET,private,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - RULE-SET,awavenue-ads,REJECT
+  - RULE-SET,category-ads-all,REJECT
+  - DOMAIN-SUFFIX,trace.qq.com,REJECT
+  - DOMAIN-SUFFIX,beacon.qq.com,REJECT
+  - DOMAIN-SUFFIX,report.qq.com,REJECT
+  - DOMAIN-SUFFIX,pingtas.qq.com,REJECT
+  - DOMAIN-SUFFIX,pingtcss.qq.com,REJECT
+  - DOMAIN-SUFFIX,stats.g.qq.com,REJECT
+  - DOMAIN-SUFFIX,isdspeed.qq.com,REJECT
+  - DOMAIN-SUFFIX,tp.linksgo.qq.com,REJECT
+  - DOMAIN-SUFFIX,webpush.wx.qq.com,REJECT
+  - DOMAIN-SUFFIX,mi.gdt.qq.com,REJECT
+  - DOMAIN-SUFFIX,t.gdt.qq.com,REJECT
+  - DOMAIN-SUFFIX,e.qq.com,REJECT
+  - DOMAIN-SUFFIX,l.qq.com,REJECT
+  - DOMAIN-SUFFIX,btrace.qq.com,REJECT
+  - DOMAIN-SUFFIX,gdt.qq.com,REJECT
+  - DOMAIN-SUFFIX,pgdt.gtimg.cn,REJECT
+  - DOMAIN-SUFFIX,adsmind.gdtimg.com,REJECT
+  - RULE-SET,bybit,Bybit
+  - RULE-SET,overseas-ai,Select
+  - DOMAIN-SUFFIX,googleapis.cn,Select
+  - DOMAIN-SUFFIX,google.cn,Select
+  - DOMAIN-SUFFIX,xn--ngstr-lra8j.com,Select
+  - RULE-SET,google,Select
+  - RULE-SET,tiktok,Select
+  - RULE-SET,steam@cn,DIRECT
+  - RULE-SET,apple-cn,DIRECT
+  - RULE-SET,microsoft@cn,DIRECT
+  - RULE-SET,cn,DIRECT
+  - RULE-SET,cn-ip,DIRECT,no-resolve
+  - MATCH,Select
