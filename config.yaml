@@ -167,7 +167,7 @@ proxy-groups:
     lazy: true
     hidden: true
     exclude-type: direct|reject
-    exclude-filter: '\[Home\]'
+    exclude-filter: '(?i)^Tailscale$|^(DIRECT|REJECT|COMPATIBLE|PASS|GLOBAL|直连)$|🇺🇸|🇨🇳|🇭🇰|🇸🇬|🇨🇦|🇰🇵|🇨🇺|🇮🇷|🇺🇿|🇸🇩|🇸🇾|直连|剩余|距离|到期|更新|官网|更多|付费)($|[^a-z])|\[Home\]'
 
   - name: Bybit
     type: fallback
